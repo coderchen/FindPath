@@ -9,7 +9,7 @@ public:
 	~AStar();
 
 	virtual void Find(
-		const GridInfo& grid,
+		const MapGrid& m,
 		const Coordinate& from,
 		const Coordinate& to,
 		PathWay& way);

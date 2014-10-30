@@ -6,11 +6,11 @@
 typedef std::tuple<int, int> Coordinate;
 typedef std::vector<Coordinate> PathWay;
 
-struct GridInfo
+struct MapGrid
 {
-	int w;
-	int h;
-	std::vector<int> data;
+	std::size_t w;
+	std::size_t h;
+	std::vector<int> points;
 };
 
 class IPathFind
@@ -20,7 +20,7 @@ public:
 	virtual ~IPathFind() { }
 
 	virtual void Find(
-		const GridInfo& grid, 
+		const MapGrid& m, 
 		const Coordinate& from, 
 		const Coordinate& to, 
 		PathWay& way) = 0;
