@@ -1,15 +1,21 @@
 #pragma once
 
-#include <tuple>
 #include <vector>
 
-typedef std::tuple<int, int> Coordinate;
+struct Coordinate
+{
+	unsigned int X;
+	unsigned int Y;
+
+	Coordinate() : X(0), Y(0) { }
+};
+
 typedef std::vector<Coordinate> PathWay;
 
 struct MapGrid
 {
-	std::size_t w;
-	std::size_t h;
+	unsigned int W;
+	unsigned int H;
 	std::vector<int> points;
 };
 
