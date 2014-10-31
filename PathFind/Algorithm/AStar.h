@@ -8,23 +8,34 @@ class AStar : public IPathFind
 	{
 		bool opened;
 		bool closed;
-		unsigned int G;
-		unsigned int H;
-		unsigned int X;
-		unsigned int Y;
-		_Node* parent;
+		int g;
+		int h;
+		int parent;
 
 		_Node() { this->reset(); }
 		void reset()
 		{
 			opened = false;
 			closed = false;
-			G = 0;
-			H = 0;
-			X = 0;
-			Y = 0;
-			parent = nullptr;
+			g = 0;
+			h = 0;
+			parent = -1;
 		}
+	};
+
+	struct _NodeMinHeapCmp
+	{
+		_NodeMinHeapCmp(std::vector<_Node>& m)
+		: m_dynMapRef(m) { }
+
+		bool operator()(int pos1, int pos2)
+		{
+			_Node& n1 = m_dynMapRef[pos1];
+			_Node& n2 = m_dynMapRef[pos2];
+			return n1.g + n1.h > n2.g + n2.h;
+		}
+
+		std::vector<_Node>& m_dynMapRef;
 	};
 
 public:
@@ -38,9 +49,8 @@ public:
 		PathWay& way);
 
 private:
-	static bool _minHeapCmp(const _Node* n1, const _Node* n2);
+	void _checkValid(const MapGrid& m, const Coordinate& from, const Coordinate& to);
 
 private:
-	std::vector<_Node> m_runtime;
-	std::vector<_Node*> m_minHeap;
+	std::vector<_Node> m_dynMap;
 };

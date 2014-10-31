@@ -4,18 +4,20 @@
 
 struct Coordinate
 {
-	unsigned int X;
-	unsigned int Y;
+	int x;
+	int y;
 
-	Coordinate() : X(0), Y(0) { }
+	Coordinate(int xPos = 0, int yPos = 0) 
+		: x(xPos), y(yPos)
+	{ }
 };
 
 typedef std::vector<Coordinate> PathWay;
 
 struct MapGrid
 {
-	unsigned int W;
-	unsigned int H;
+	int width;
+	int height;
 	std::vector<int> points;
 };
 
