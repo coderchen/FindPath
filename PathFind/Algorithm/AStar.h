@@ -27,21 +27,6 @@ class AStar : public IPathFind
 		}
 	};
 
-	struct _NodeMinHeapCmp
-	{
-		_NodeMinHeapCmp(std::vector<_Node>& m)
-		: m_dynMapRef(m) { }
-
-		bool operator()(int pos1, int pos2)
-		{
-			_Node& n1 = m_dynMapRef[pos1];
-			_Node& n2 = m_dynMapRef[pos2];
-			return n1.g + n1.h > n2.g + n2.h;
-		}
-
-		std::vector<_Node>& m_dynMapRef;
-	};
-
 public:
 	AStar();
 	~AStar();
