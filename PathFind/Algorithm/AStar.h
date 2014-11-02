@@ -10,7 +10,9 @@ class AStar : public IPathFind
 		bool closed;
 		int g;
 		int h;
-		int parent;
+		int x;
+		int y;
+		_Node* parent;
 
 		_Node() { this->reset(); }
 		void reset()
@@ -19,7 +21,9 @@ class AStar : public IPathFind
 			closed = false;
 			g = 0;
 			h = 0;
-			parent = -1;
+			x = -1;
+			y = -1;
+			parent = nullptr;
 		}
 	};
 
@@ -50,7 +54,9 @@ public:
 
 private:
 	void _checkValid(const MapGrid& m, const Coordinate& from, const Coordinate& to);
+	bool _nodeCmp(_Node* n1, _Node* n2);
 
 private:
 	std::vector<_Node> m_dynMap;
+	std::vector<_Node*> m_minHeap;
 };

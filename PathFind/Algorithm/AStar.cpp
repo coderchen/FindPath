@@ -1,8 +1,9 @@
 #include "AStar.h"
 #include <cassert>
+#include <functional>
 #include <algorithm>
 
-AStar::AStar()
+AStar::AStar() : m_dynMap(), m_minHeap()
 {
 
 }
@@ -22,6 +23,15 @@ void AStar::_checkValid(const MapGrid& m, const Coordinate& from, const Coordina
 	assert(to.y >= 0 && to.y < m.height);
 }
 
+bool AStar::_nodeCmp(_Node* n1, _Node* n2)
+{
+	assert(n1 && n2);
+	assert(n1->x != -1 && n1->y != -1);
+	assert(n2->x != -1 && n2->y != -1);
+
+	return n1->g + n1->h > n2->g + n2->h;
+}
+
 void AStar::Find(
 	const MapGrid& m,
 	const Coordinate& from,
@@ -30,86 +40,89 @@ void AStar::Find(
 {
 	_checkValid(m, from, to);
 
+	m_minHeap.clear();
+	m_dynMap.clear();
 	m_dynMap.resize(m.width * m.height);
-	for (_Node& n : m_dynMap)
-		n.reset();
 
-	std::vector<int> minHeap;
+	_Node& start = m_dynMap[from.y * m.width + from.x];
+	start.opened = true;
+	start.g = 0;
+	start.h = abs(from.x - to.x) + abs(from.y - to.y);
+	start.x = from.x;
+	start.y = from.y;
+	m_minHeap.push_back(&start);
+	std::push_heap(m_minHeap.begin(), m_minHeap.end(),
+		std::bind(&AStar::_nodeCmp, this, std::placeholders::_1, std::placeholders::_2));
 
-	int idx = from.y * m.width + from.x;
-	_Node& n = m_dynMap[idx];
-	n.opened = true;
-	n.g = 0;
-	n.h = abs(from.x - to.x) + abs(from.y - to.y);
-	minHeap.push_back(idx);
-	std::push_heap(minHeap.begin(), minHeap.end(), _NodeMinHeapCmp(m_dynMap));
-
+	//上右下左
 	const int DIR_CNT = 4;
 	const int X_DIR[DIR_CNT] = {0, 1, 0, -1};
 	const int Y_DIR[DIR_CNT] = {-1, 0, 1, 0};
 
 	bool bFind = false;
-	while (!minHeap.empty() && !bFind)
+	while (!m_minHeap.empty() && !bFind)
 	{
-		int pos = minHeap.front();
-		std::pop_heap(minHeap.begin(), minHeap.end(), _NodeMinHeapCmp(m_dynMap));
-		minHeap.pop_back();
-		m_dynMap[pos].closed = true;
+		_Node* pMin = m_minHeap.front();
+		std::pop_heap(m_minHeap.begin(), m_minHeap.end(), 
+			std::bind(&AStar::_nodeCmp, this, std::placeholders::_1, std::placeholders::_2));
+		m_minHeap.pop_back();
+		pMin->closed = true;
 
-		int x = pos % m.width;
-		int y = pos / m.width;
-
-		for (int i = 0; i < 4; ++i)
+		for (int i = 0; i < DIR_CNT; ++i)
 		{
-			int nextX = x + X_DIR[i];
-			int nextY = y + Y_DIR[i];
+			int nextX = pMin->x + X_DIR[i];
+			int nextY = pMin->y + Y_DIR[i];
 
+			//检测有效坐标
 			if (nextX < 0 || nextX >= m.width 
 				|| nextY < 0 || nextY >= m.height)
 				continue;
+
+			//检测是否可以通过 1:障碍
 			if (m.points[nextY * m.width + nextX] == 1) continue;
 
+			//检测是否已经加入关闭列表
 			_Node& nextNode = m_dynMap[nextY * m.width + nextX];
 			if (nextNode.closed) continue;
 
 			if (nextNode.opened)
 			{
-				if (m_dynMap[pos].g + 1 < nextNode.g)
+				//新路径更短
+				if (pMin->g + 1 < nextNode.g)
 				{
-					nextNode.g = m_dynMap[pos].g + 1;
-					nextNode.parent = pos;
+					nextNode.g = pMin->g + 1;
+					nextNode.parent = pMin;
+					std::make_heap(m_minHeap.begin(), m_minHeap.end(),
+						std::bind(&AStar::_nodeCmp, this, std::placeholders::_1, std::placeholders::_2));
 				}
 			}
 			else
 			{
 				nextNode.opened = true;
-				nextNode.parent = pos;
-				nextNode.g = m_dynMap[pos].g + 1;
+				nextNode.parent = pMin;
+				nextNode.g = pMin->g + 1;
 				nextNode.h = abs(nextX - to.x) + abs(nextY - to.y);
-				if (nextX == to.y && nextY == to.y)
+				nextNode.x = nextX;
+				nextNode.y = nextY;
+				if (nextX == to.x && nextY == to.y)
 				{
 					bFind = true;
 					break;
 				}
 
-				minHeap.push_back(nextY * m.width + nextX);
-				std::push_heap(minHeap.begin(), minHeap.end(), _NodeMinHeapCmp(m_dynMap));
+				m_minHeap.push_back(&nextNode);
+				std::push_heap(m_minHeap.begin(), m_minHeap.end(),
+					std::bind(&AStar::_nodeCmp, this, std::placeholders::_1, std::placeholders::_2));
 			}
 		}
 	}
-
+	
 	if (!bFind) return;
-
-	int curX = to.x;
-	int curY = to.y;
-	while (1)
+	_Node* p = &m_dynMap[to.y * m.width + to.x];
+	while (p)
 	{
-		way.push_back(Coordinate(curX, curY));
-		int p_pos = m_dynMap[curY * m.width + curX].parent;
-		if (p_pos == -1) break;
-		curX = p_pos % m.width;
-		curY = p_pos / m.width;
+		way.push_back(Coordinate(p->x, p->y));
+		p = p->parent;
 	}
-
 	std::reverse(way.begin(), way.end());
 }
